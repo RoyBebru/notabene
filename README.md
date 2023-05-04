@@ -1,11 +1,12 @@
-# addressbook2
+# NotaBene
 
 The program is an address book that runs in a command-line mode in terminal window.
 
 
 To run program use command
 
-    $ python3 main.py
+    $ pip3 install .
+    $ nb
 
 The command prompt looks like this:
 
