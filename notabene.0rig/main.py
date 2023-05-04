@@ -378,6 +378,7 @@ def input_or_default(prompt="", default=""):
 
 def main() -> None:
     # Function is used as convenient container for associated objects
+    turn_on_edit_in_input()
     def box(): pass
     box.ab = AddressBook(load_addressbook())
     box.ab_fit = tuple(box.ab.keys())
@@ -460,5 +461,4 @@ def turn_on_edit_in_input():
 
 
 if __name__ == "__main__":
-    turn_on_edit_in_input()
     main()
