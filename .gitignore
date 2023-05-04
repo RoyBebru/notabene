@@ -1,5 +1,5 @@
 .venv*/
 build/
-notabene.0rig/
+notabene.0rig*/
 notabene.egg-info/
 notabene/__pycache__

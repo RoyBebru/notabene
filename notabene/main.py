@@ -11,12 +11,16 @@ License: MIT
 
 import atexit
 import json
+from http.server import HTTPServer, BaseHTTPRequestHandler
 import os
 from pathlib import Path
 import re
 import subprocess
 import sys
 import types
+from typing import Any
+from urllib.parse import urlparse, parse_qs, unquote_plus
+import webbrowser
 
 
 from notabene.addressbook import AddressBook, AddressBookException
@@ -28,6 +32,9 @@ from notabene.record import Record, RecordException
 """CONSTANTS"""
 ADDRESSBOOK_PATHFILE = Path.home() / ".notabene.abo"
 HISTFILE = Path.home() / ".notabene.history"
+
+HTTPD_PORT = 8888
+HTTPD_KEEP_RUNNING = True
 
 
 def command_error_catcher(cmd_hundler):
@@ -109,7 +116,6 @@ def cmd_all(cmd_args: str, box):
     box.ab_fit = tuple(box.ab.keys())
     box.ab_fit_to_fit = box.ab_fit
     return None
-
 
 @command_error_catcher
 def cmd_change(cmd_args: str, box):
@@ -374,6 +380,86 @@ def input_or_default(prompt="", default=""):
         return default
 
 
+def notabene_handler():
+    print("nb_handler here!")
+    return "nb_handler here!"
+
+
+class PageEngine(BaseHTTPRequestHandler):
+
+    def do_GET(self):
+        # first we need to parse it
+        parsed = urlparse(self.path)
+        # get the query string
+        query_string = parsed.query
+        # get the request path, this new path does not have the query string
+        path = parsed.path
+
+        if path == '/':
+            path = "/index.html"
+
+        print(f"path='{path}'; query: '{unquote_plus(query_string)}'")
+
+        # send 200 response
+        self.send_response(200)
+
+        self.send_header("Content-Encoding", "gzip")
+        # self.send_header("Content-Type", "text/html")
+
+        # send response headers
+        self.end_headers()
+        # send the body of the response
+
+        name = str(Path(__file__).parent / "web" / (path[1:] + ".gz"))
+        try:
+            with open(name, "rb") as fh:
+                self.wfile.write(fh.read())
+        except (FileNotFoundError, KeyError) as e:
+            print(str(e))
+
+    def do_POST(self):
+        global HTTPD_KEEP_RUNNING
+        # read the content-length header
+        content_length = int(self.headers.get("Content-Length"))
+        # read that many bytes from the body of the request
+        body = self.rfile.read(content_length)
+        body = unquote_plus(body.decode("utf-8"))
+
+        print(f"Post BODY: '{body}'")
+
+        value = parse_qs(body)
+        if "exit" in value.keys():
+            print("Bye bye!")
+            HTTPD_KEEP_RUNNING = False
+        else:
+            # notabene_handler()
+            print(f"command='{value['command'][0]}'")
+
+        self.send_response(200)
+        self.end_headers()
+        # echo the body in the response
+        self.wfile.write(bytes(body, "utf-8"))
+
+    def log_message(self, format: str, *args: Any) -> None:
+        """Do not print log"""
+        return
+
+
+def httpd_server(box):
+    global HTTPD_KEEP_RUNNING
+    HTTPD_KEEP_RUNNING = True
+    try:
+        httpd = HTTPServer(('localhost', HTTPD_PORT), PageEngine)
+
+        webbrowser.open(f"http://localhost:{HTTPD_PORT}")
+        while HTTPD_KEEP_RUNNING:
+            httpd.handle_request()
+    except (OSError, PermissionError, OverflowError, KeyboardInterrupt):
+        pass
+
+    return None
+
+
 def main() -> None:
     # Function is used as convenient container for associated objects
     turn_on_edit_in_input()
@@ -411,6 +497,10 @@ def main() -> None:
         if cmd_raw == "":
             # Empty string: nothing to do
             continue
+        elif cmd_raw == "@":
+            httpd_server(box)
+            continue
+
         (cmd, cmd_args) = parse(cmd_raw)
 
         handler = get_handler(cmd)
