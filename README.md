@@ -185,3 +185,8 @@ Application support the following commands:
   - **\?**|**help**|**допоможи**|**допомога** - prints short instruction
   - **.**|**exit**|**quit**|**bye**|**вийди**|**вийти**|**вихід** - save modifications and exit from application
   - **CTRL+C** - exit from program without saving modification
+
+If there is installed File Grouper utility from https://github.com/RoyBebru/file-grouper the following command are present
+
+  - **file**|**sort**|**файл**|**сорт**|**каталог** - run File Grouper
+
