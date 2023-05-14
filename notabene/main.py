@@ -11,10 +11,12 @@ License: MIT
 
 import atexit
 import json
+import html
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import os
 from pathlib import Path
 import re
+import readline
 import subprocess
 import sys
 import types
@@ -211,9 +213,12 @@ def cmd_delete(cmd_args: str, box):
     box.ab.is_modified = True
     return
 
+def remove_last_readline_item():
+    readline.remove_history_item(readline.get_current_history_length() - 1)
 
 @command_error_catcher
 def cmd_exit(*args):
+    remove_last_readline_item()
     # dump_addressbook(args[1])
     return None
 
@@ -278,6 +283,7 @@ def cmd_show(cmd_args: str, box):
 
 
 def cmd_sort_files(*args):
+    remove_last_readline_item()
     subprocess.run("fig")
 
 
@@ -378,7 +384,7 @@ def input_or_default(prompt="", default=""):
         return default
 
 
-def notabene_handler():
+def main_for_httpd(command, box):
     print("nb_handler here!")
     return "nb_handler here!"
 
@@ -426,14 +432,18 @@ class PageEngine(BaseHTTPRequestHandler):
             print("Bye bye!")
             PageEngine.c_keep_running = False
         elif "firstly" in value.keys():
-            body = "{" \
-                        f"all:{len(PageEngine.c_box.ab)}," \
-                        f"fit:{len(PageEngine.c_box.ab_fit)}," \
-                        f"fit_to_fit:{len(PageEngine.c_box.ab_fit_to_fit)}" \
-                    "}"
-        else:
-            # notabene_handler()
+            bodict = {}
+            bodict["counter"] = [ len(PageEngine.c_box.ab)
+                                , len(PageEngine.c_box.ab_fit)
+                                , len(PageEngine.c_box.ab_fit_to_fit) ]
+            bodict["history"] = [ html.escape(readline.get_history_item(i))
+                                  for i in range(readline.get_current_history_length(), 0, -1)]
+            body = json.dumps(bodict);
+            print(body)
+
+        elif "command" in value.keys():
             print(f"command='{value['command'][0]}'")
+            main_for_httpd(value["command"][0], PageEngine.c_box)
 
         self.send_response(200)
         self.end_headers()
@@ -448,6 +458,7 @@ class PageEngine(BaseHTTPRequestHandler):
 
 def httpd_server(box):
     PageEngine.c_keep_running = True
+    box.is_vt = False
     PageEngine.c_box = box
     try:
         httpd = HTTPServer(('localhost', HTTPD_PORT), PageEngine)
@@ -458,6 +469,7 @@ def httpd_server(box):
     except (OSError, PermissionError, OverflowError, KeyboardInterrupt):
         pass
 
+    box.is_vt = True
     return None
 
 
@@ -468,6 +480,7 @@ def main() -> None:
     box.ab = AddressBook(load_addressbook())
     box.ab_fit = tuple(box.ab.keys())
     box.ab_fit_to_fit = box.ab_fit
+    box.is_vt = True
     print("Use ? for more information")
 
     while True:
@@ -499,6 +512,7 @@ def main() -> None:
             # Empty string: nothing to do
             continue
         elif cmd_raw == "@":
+            remove_last_readline_item()
             httpd_server(box)
             continue
 
@@ -537,16 +551,12 @@ def main() -> None:
 
 def turn_on_edit_in_input():
     try:
-        import readline
-        try:
-            readline.read_history_file(HISTFILE)
-        except FileNotFoundError:
-            pass
-        # Default history len is -1 (infinite), which may grow unruly
-        readline.set_history_length(1000)
-        atexit.register(readline.write_history_file, HISTFILE)
-    except ModuleNotFoundError:
+        readline.read_history_file(HISTFILE)
+    except FileNotFoundError:
         pass
+    # Default history len is -1 (infinite), which may grow unruly
+    readline.set_history_length(1000)
+    atexit.register(readline.write_history_file, HISTFILE)
 
 
 if __name__ == "__main__":

@@ -46,7 +46,7 @@ class Phone(Field):
 
     @value.setter
     def value(self, phone):
-        phone = self.normalize_phone(phone)
+        phone = self.normalize(phone)
         self.verify(phone)
         # Phone number is proven and can be stored
         self._value = phone
@@ -80,6 +80,9 @@ class Phone(Field):
         if phone1.find(phone2) != -1 or phone2.find(phone1) != -1:
             return True
         return False
+    
+    def normalize(self, value):
+        return self.normalize_phone(value)
 
 if __name__ == "__main__":
     p1 = Phone("777-77-77")

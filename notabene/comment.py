@@ -26,6 +26,9 @@ class Comment(Field):
         # old_comment = self._value
         self._value = comment
 
+    def normalize(self, value):
+        return value
+
 if __name__ == "__main__":
     p1 = Comment("samjdmsna asjdj as djashgdj as")
     p2 = Comment("samjdmsna asjdj as djashgdj as")

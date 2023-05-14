@@ -29,9 +29,11 @@ class Address(Field):
 
     @value.setter
     def value(self, address):
-        address = self.normalize_address(address)
+        address = self.normalize(address)
         self._value = address
 
+    def normalize(self, value):
+        return self.normalize_address(value)
 
 if __name__ == "__main__":
     p1 = Address("samjdmsna asjdj as djashgdj                 as")

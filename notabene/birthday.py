@@ -76,6 +76,8 @@ class Birthday(Field):
     def report(self):
         return f"{self.value} (+{self.days_to_birthday()} days left)"
 
+    def normalize(self, value):
+        return value
 
 if __name__ == "__main__":
     p1 = Birthday("10.11.12")

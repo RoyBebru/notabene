@@ -6,8 +6,9 @@ Email: RoyBebru@gmail.com
 License: MIT
 """
 
+from abc import ABC, abstractmethod
 
-class Field:
+class Field(ABC):
 
     def __init__(self, value = "", title="", order=0, is_unique=False):
         # Field title, such as "Phone", "E-mail", "Birthday", etc
@@ -26,8 +27,9 @@ class Field:
     def value(self, value):
         self._value = self.normalize(value)
 
+    @abstractmethod
     def normalize(self, value):
-        return value
+        raise NotImplementedError("absent method implementaion")
 
     def __str__(self):
         return self.value
