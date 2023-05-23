@@ -8,9 +8,9 @@ License: MIT
 
 from abc import ABC, abstractmethod
 
-class Field(ABC):
 
-    def __init__(self, value = "", title="", order=0, is_unique=False):
+class Field(ABC):
+    def __init__(self, value="", title="", order=0, is_unique=False):
         # Field title, such as "Phone", "E-mail", "Birthday", etc
         self.title = title
         # Field to sort
