@@ -8,6 +8,10 @@ To run program use command
     $ pip3 install .
     $ nb
 
+Or
+    $ poetry shell
+    $ nb
+
 The command prompt looks like this:
 
     (101(17(1((C>
