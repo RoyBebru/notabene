@@ -9,6 +9,7 @@ To run program use command
     $ nb
 
 Or
+
     $ poetry shell
     $ nb
 
